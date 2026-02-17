@@ -111,35 +111,18 @@ jobs:
           version: "0.9.26"
           enable-cache: false
 
-      - name: Set versions
+      - name: Prepare build environment
         run: |
-          echo "MATRIX_TE_VERSION=$(echo ${{ matrix.MATRIX_TE_VERSION }})" >> $GITHUB_ENV
-          echo "MATRIX_PYTHON_VERSION=$(echo ${{ matrix.MATRIX_PYTHON_VERSION }})" >> $GITHUB_ENV
-
-      - name: Install cibuildwheel
-        run: |
-          uv venv --python 3.13
-          uv pip install cibuildwheel
-
-      - name: Build wheels for TransformerEngine ${{ matrix.te-version }}
-        run: |
-          .venv/bin/cibuildwheel --output-dir dist .
+          bash build_scripts/prepare_for_build.sh "${TRANSFORMER_ENGINE_VERSION}"
         env:
-          CIBW_ARCHS_LINUX: ${{ matrix.target-arch }}
-          CIBW_BUILD: cp${{ env.MATRIX_PYTHON_VERSION }}-*64
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014_x86_64
-          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014_aarch64
-          CIBW_BEFORE_ALL: >
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-          CIBW_BEFORE_BUILD_LINUX: >
-            pip install setuptools wheel &&
-            bash build_scripts/prepare_for_build.sh ${{ steps.transformer-engine-version.outputs.version }}
-          CIBW_ENVIRONMENT: >
-            PATH=$PATH:/root/.local/bin
-            MATRIX_TE_VERSION=${{ env.MATRIX_TE_VERSION }}
-            MATRIX_PYTHON_VERSION=${{ env.MATRIX_PYTHON_VERSION }}
-          CIBW_SKIP: "*musllinux*"
-          CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
+          TRANSFORMER_ENGINE_VERSION: ${{ steps.transformer-engine-version.outputs.version }}
+
+      - name: Build wheel for TransformerEngine Metapackage ${{ matrix.te-version }}
+        run: |
+          uv build --wheel --out-dir dist
+        env:
+          NVTE_BUILD_METAPACKAGE: "1"
+          NVTE_RELEASE_BUILD: "1"
 
       - name: Embed SBOM into wheel
         run: |
