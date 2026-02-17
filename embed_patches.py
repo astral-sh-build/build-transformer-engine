@@ -95,11 +95,12 @@ def augment_metadata(
     assert isinstance(description, str)
     wheel_metadata.set_payload("")
 
-    # Set the description content-type to Markdown.
+    # Determine the description content-type.
     match wheel_metadata.get("Description-Content-Type"):
         case None:
-            wheel_metadata.add_header("Description-Content-Type", "text/markdown")
-        case "text/markdown":
+            content_type = "text/markdown"
+            wheel_metadata.add_header("Description-Content-Type", content_type)
+        case "text/markdown" | "text/x-rst" as content_type:
             pass
         case value:
             raise ValueError(f"Unexpected `Description-Content-Type` header: {value}")
@@ -116,16 +117,27 @@ def augment_metadata(
     truncated_sha = source_commit[:7]
     commit_url = f"{source_repo.rstrip('/')}/commit/{source_commit}"
 
-    description += (
-        f"This distribution was built by Astral from [{repo_name}@{truncated_sha}]({commit_url})."
-    )
+    # Format the provenance based on content type.
+    if content_type == "text/x-rst":
+        description += f"This distribution was built by Astral from `{repo_name}@{truncated_sha} <{commit_url}>`_."
+    else:  # text/markdown
+        description += f"This distribution was built by Astral from [{repo_name}@{truncated_sha}]({commit_url})."
 
     if patches:
         description += "\n\n"
         description += "The following patches were applied to the upstream source:\n"
         for patch_name, patch_content in sorted(patches.items()):
-            description += f"\n**{patch_name}**\n"
-            description += f"```diff\n{patch_content}```\n"
+            if content_type == "text/x-rst":
+                description += f"\n**{patch_name}**\n\n"
+                description += ".. code-block:: diff\n\n"
+                # Indent the patch content for RST code block
+                indented_patch = "\n".join(
+                    f"   {line}" for line in patch_content.splitlines()
+                )
+                description += f"{indented_patch}\n"
+            else:  # text/markdown
+                description += f"\n**{patch_name}**\n"
+                description += f"```diff\n{patch_content}```\n"
 
     description += "\n"
     wheel_metadata.set_payload(description)
@@ -200,7 +212,9 @@ def embed_sbom(
                 continue
             if path == metadata_path:
                 # Update METADATA entry with new hash and size.
-                writer.writerow([metadata_path, metadata_hash, str(len(new_metadata_bytes))])
+                writer.writerow(
+                    [metadata_path, metadata_hash, str(len(new_metadata_bytes))]
+                )
             else:
                 writer.writerow(row)
 
@@ -237,9 +251,7 @@ def main() -> None:
     parser.add_argument(
         "--source-repo", type=str, required=True, help="Source repository URL"
     )
-    parser.add_argument(
-        "--source-tag", type=str, required=True, help="Source git tag"
-    )
+    parser.add_argument("--source-tag", type=str, required=True, help="Source git tag")
     parser.add_argument(
         "--source-commit", type=str, required=True, help="Source git commit SHA"
     )
