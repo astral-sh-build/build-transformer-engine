@@ -114,13 +114,13 @@ jobs:
       - name: Prepare build environment
         run: |
           bash build_scripts/prepare_for_build.sh ${{ steps.transformer-engine-version.outputs.version }}
-        env:
-          NVTE_BUILD_METAPACKAGE: "1"
-          NVTE_RELEASE_BUILD: "1"
 
       - name: Build wheel for TransformerEngine Metapackage ${{ matrix.te-version }}
         run: |
           uv build --wheel --out-dir dist
+        env:
+          NVTE_BUILD_METAPACKAGE: "1"
+          NVTE_RELEASE_BUILD: "1"
 
       - name: Embed SBOM into wheel
         run: |
