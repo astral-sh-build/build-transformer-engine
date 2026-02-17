@@ -113,7 +113,9 @@ jobs:
 
       - name: Prepare build environment
         run: |
-          bash build_scripts/prepare_for_build.sh ${{ steps.transformer-engine-version.outputs.version }}
+          bash build_scripts/prepare_for_build.sh "${TRANSFORMER_ENGINE_VERSION}"
+        env:
+          TRANSFORMER_ENGINE_VERSION: ${{ steps.transformer-engine-version.outputs.version }}
 
       - name: Build wheel for TransformerEngine Metapackage ${{ matrix.te-version }}
         run: |
