@@ -20,12 +20,13 @@ For example, to install the PyTorch extension from the CUDA 12.8 index:
 $ uv add 'transformer-engine[pytorch]' --index astral-cu128=https://wheels.astral.sh/simple/cu128/
 ```
 
-This configures the index and uses it as the source for
-`transformer-engine` and `transformer-engine-torch`:
+This configures the index and uses it as the source for the metapackage,
+matching CUDA core, and PyTorch extension:
 
 ```toml
 [tool.uv.sources]
 transformer-engine = { index = "astral-cu128" }
+transformer-engine-cu12 = { index = "astral-cu128" }
 transformer-engine-torch = { index = "astral-cu128" }
 
 [[tool.uv.index]]
@@ -39,9 +40,12 @@ Or, with `uv pip`:
 $ uv pip install --index https://wheels.astral.sh/simple/cu128/ 'transformer-engine[pytorch]'
 ```
 
-The matching NVIDIA CUDA core is installed from PyPI. The metapackage can be
-installed from any compatible CUDA index; it does not need a CUDA-specific
-local version or a separate build for each Python version or architecture.
+The matching CUDA core is installed from the same Astral GPU index. Both the
+metapackage and core include the same local-version compatibility patch, so the
+patched files remain correct regardless of wheel installation order. The
+metapackage can be installed from any compatible CUDA index; it does not need a
+CUDA-specific local version or a separate build for each Python version or
+architecture.
 
 ## Supported versions
 
