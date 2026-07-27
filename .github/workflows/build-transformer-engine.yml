@@ -10,7 +10,7 @@ on:
       TRANSFORMER_ENGINE_VERSION:
         description: "TransformerEngine version"
         required: true
-        default: "v2.11"
+        default: "v2.16"
         type: string
   release:
     types: [created]
@@ -20,46 +20,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  plan-matrix:
-    name: Plan TransformerEngine metapackage build matrix
+  build-wheel:
+    name: Build TransformerEngine metapackage wheel
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-build') }}
     permissions:
-      contents: read # for actions/checkout
-    outputs:
-      matrix: ${{ steps.generate-matrix.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6
-        with:
-          version: "0.9.26"
-
-      - name: Generate build matrix
-        id: generate-matrix
-        run: |
-          set -euxo pipefail
-          echo "matrix=$(uv run --script plan-matrix.py)" >> $GITHUB_OUTPUT
-        env:
-          LIMIT_MATRIX: ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full-build') && '1' || '0' }}
-
-  build-wheels:
-    name: Build Wheel
-    needs: [plan-matrix]
-    runs-on: ${{ matrix.RUNNER }}
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-build') }}
-
-    permissions:
       contents: write
-      actions: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJSON(needs.plan-matrix.outputs.matrix) }}
 
     steps:
       - name: Determine TransformerEngine version
@@ -75,7 +41,7 @@ jobs:
           elif [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
             TRANSFORMER_ENGINE_VERSION="${INPUTS_TRANSFORMER_ENGINE_VERSION}"
           else
-            TRANSFORMER_ENGINE_VERSION="v2.11"
+            TRANSFORMER_ENGINE_VERSION="v2.16"
           fi
           echo "version=${TRANSFORMER_ENGINE_VERSION}" >> $GITHUB_OUTPUT
           echo "Using TransformerEngine version: ${TRANSFORMER_ENGINE_VERSION}"
@@ -111,35 +77,23 @@ jobs:
           version: "0.9.26"
           enable-cache: false
 
-      - name: Set versions
-        run: |
-          echo "MATRIX_TE_VERSION=$(echo ${{ matrix.MATRIX_TE_VERSION }})" >> $GITHUB_ENV
-          echo "MATRIX_PYTHON_VERSION=$(echo ${{ matrix.MATRIX_PYTHON_VERSION }})" >> $GITHUB_ENV
-
-      - name: Install cibuildwheel
+      - name: Prepare metapackage build environment
         run: |
           uv venv --python 3.13
-          uv pip install cibuildwheel
-
-      - name: Build wheels for TransformerEngine ${{ matrix.te-version }}
-        run: |
-          .venv/bin/cibuildwheel --output-dir dist .
+          uv pip install setuptools wheel
+          bash build_scripts/prepare_for_build.sh "${TRANSFORMER_ENGINE_VERSION}"
         env:
-          CIBW_ARCHS_LINUX: ${{ matrix.target-arch }}
-          CIBW_BUILD: cp${{ env.MATRIX_PYTHON_VERSION }}-*64
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014_x86_64
-          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014_aarch64
-          CIBW_BEFORE_ALL: >
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-          CIBW_BEFORE_BUILD_LINUX: >
-            pip install setuptools wheel &&
-            bash build_scripts/prepare_for_build.sh ${{ steps.transformer-engine-version.outputs.version }}
-          CIBW_ENVIRONMENT: >
-            PATH=$PATH:/root/.local/bin
-            MATRIX_TE_VERSION=${{ env.MATRIX_TE_VERSION }}
-            MATRIX_PYTHON_VERSION=${{ env.MATRIX_PYTHON_VERSION }}
-          CIBW_SKIP: "*musllinux*"
-          CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
+          TRANSFORMER_ENGINE_VERSION: ${{ steps.transformer-engine-version.outputs.version }}
+
+      - name: Build pure Python TransformerEngine metapackage wheel
+        run: |
+          uv build --wheel --no-build-isolation --out-dir dist
+        env:
+          NVTE_BUILD_METAPACKAGE: "1"
+          NVTE_RELEASE_BUILD: "1"
+          NVTE_FRAMEWORK: "none"
+          NVTE_CUDA_ARCHS: "70;80;89;90;100;120"
+          NVTE_SKIP_SUBMODULE_CHECKS_DURING_BUILD: "1"
 
       - name: Embed SBOM into wheel
         run: |
@@ -171,8 +125,7 @@ jobs:
 
       - name: Upload wheels to release
         if: github.event_name == 'release'
-        uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
-        with:
-          files: ./dist/*.whl
-          tag_name: ${{ github.ref_name }}
-          append_body: true
+        run: gh release upload "${RELEASE_TAG}" dist/*.whl --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}

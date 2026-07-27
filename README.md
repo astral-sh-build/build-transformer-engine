@@ -10,7 +10,6 @@ The metapackage is a pure Python package that depends on backend-specific packag
 
 ## Structure
 
-- `plan-matrix.py` - Generates the build matrix for different Python versions and architectures
 - `prepare_for_build.sh` - Prepares the build environment (applies any necessary patches)
 - `embed_patches.py` - Embeds SBOM and patch information into built wheels
 - `.github/workflows/` - CI configuration for automated builds
@@ -20,13 +19,15 @@ The metapackage is a pure Python package that depends on backend-specific packag
 The builds are orchestrated through GitHub Actions. The workflow:
 
 1. Checks out the specified version of TransformerEngine from NVIDIA's repository
-2. Builds the metapackage wheel for various Python versions and architectures
+2. Builds one `py3-none-any` metapackage wheel for the release version
 3. Embeds SBOM information into the wheel
 4. Uploads the wheel as an artifact (for PRs) or to the release (for release builds)
 
 ## Supported Versions
 
-See [plan-matrix.py](plan-matrix.py) for the list of supported TransformerEngine versions, Python versions, and architectures.
+The metapackage is pure Python: each TransformerEngine release needs one wheel,
+which can be shared by every supported Python version, architecture, and CUDA
+index. Version-specific patches are maintained under `patches/`.
 
 ## License
 
