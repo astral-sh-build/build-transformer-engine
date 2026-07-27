@@ -1,34 +1,79 @@
 # build-transformer-engine
 
-This repository contains build scripts and CI configuration for building the [NVIDIA TransformerEngine](https://github.com/NVIDIA/TransformerEngine) **metapackage** wheels.
+Pre-built pure Python wheels for the metapackage from
+[NVIDIA Transformer Engine](https://github.com/NVIDIA/TransformerEngine), across
+Python, CUDA, and CPU architectures.
 
-The metapackage is a pure Python package that depends on backend-specific packages (like `transformer-engine-torch`, `transformer-engine-jax`, etc.) and provides a unified interface.
+## Installation
 
-## Related Repositories
+Following the PyTorch convention, artifacts are published to a separate index
+for each CUDA version. Unlike the PyTorch extension, the Transformer Engine
+metapackage is independent of CUDA, PyTorch, and CPU architecture: the same
+`transformer_engine-2.16.0-py3-none-any.whl` is published to each compatible
+CUDA index.
 
-- [build-transformer-engine-torch](https://github.com/astral-sh-build/build-transformer-engine-torch) - Builds the PyTorch backend for TransformerEngine
+Once released, pre-built wheels will be available on
+[Astral's GPU indexes](https://wheels.astral.sh/index.html).
+For example, to install the PyTorch extension from the CUDA 12.8 index:
 
-## Structure
+```console
+$ uv add 'transformer-engine[pytorch]' --index astral-cu128=https://wheels.astral.sh/simple/cu128/
+```
 
-- `prepare_for_build.sh` - Prepares the build environment (applies any necessary patches)
-- `embed_patches.py` - Embeds SBOM and patch information into built wheels
-- `.github/workflows/` - CI configuration for automated builds
+This configures the index and uses it as the source for
+`transformer-engine` and `transformer-engine-torch`:
 
-## Building
+```toml
+[tool.uv.sources]
+transformer-engine = { index = "astral-cu128" }
+transformer-engine-torch = { index = "astral-cu128" }
 
-The builds are orchestrated through GitHub Actions. The workflow:
+[[tool.uv.index]]
+name = "astral-cu128"
+url = "https://wheels.astral.sh/simple/cu128/"
+```
 
-1. Checks out the specified version of TransformerEngine from NVIDIA's repository
-2. Builds one `py3-none-any` metapackage wheel for the release version
-3. Embeds SBOM information into the wheel
-4. Uploads the wheel as an artifact (for PRs) or to the release (for release builds)
+Or, with `uv pip`:
 
-## Supported Versions
+```console
+$ uv pip install --index https://wheels.astral.sh/simple/cu128/ 'transformer-engine[pytorch]'
+```
 
-The metapackage is pure Python: each TransformerEngine release needs one wheel,
-which can be shared by every supported Python version, architecture, and CUDA
-index. Version-specific patches are maintained under `patches/`.
+The matching NVIDIA CUDA core is installed from PyPI. The metapackage can be
+installed from any compatible CUDA index; it does not need a CUDA-specific
+local version or a separate build for each Python version or architecture.
+
+## Supported versions
+
+Wheels can be built for the following NVIDIA Transformer Engine versions:
+
+- [`2.16.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.16)
+- [`2.15.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.15)
+- [`2.14.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.14)
+- [`2.13.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.13)
+- [`2.12.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.12)
+- [`2.11.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.11)
+- [`2.10.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.10)
+- [`2.9.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.9)
+- [`2.8.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.8)
+- [`2.7.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.7)
+- [`2.6.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.6)
+- [`2.5.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.5)
+- [`2.4.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.4)
+- [`2.3.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.3)
+- [`2.2.1`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.2.1)
+
+The latest supported upstream release, Transformer Engine 2.16.0, supports Python
+3.10 and later. Its pure Python wheel is shared across CUDA 12.1, 12.4, 12.6,
+12.8, 12.9, 13.0, and 13.2 indexes.
 
 ## License
 
-Apache License 2.0 - See [LICENSE](LICENSE) for details.
+build-transformer-engine is licensed under the
+[Apache License, Version 2.0](LICENSE).
+
+<div align="center">
+  <a target="_blank" href="https://astral.sh" style="background:none">
+    <img src="https://raw.githubusercontent.com/astral-sh/ruff/main/assets/svg/Astral.svg" alt="Made by Astral">
+  </a>
+</div>
