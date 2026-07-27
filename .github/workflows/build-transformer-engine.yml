@@ -17,12 +17,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-wheel:
-    name: Build TransformerEngine metapackage wheel
+  plan-matrix:
+    name: Plan TransformerEngine metapackage build matrix
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-build') }}
     permissions:
       contents: read
+    outputs:
+      matrix: ${{ steps.generate-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6.0.1
+        with:
+          version: "0.9.26"
+          enable-cache: false
+
+      - name: Generate build matrix
+        id: generate-matrix
+        run: |
+          set -euxo pipefail
+          echo "matrix=$(uv run --script plan-matrix.py)" >> "$GITHUB_OUTPUT"
+        env:
+          LIMIT_MATRIX: ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full-build') && '1' || '0' }}
+
+  build-wheel:
+    name: Build TransformerEngine metapackage wheel (CUDA ${{ matrix.MANYLINUX_CUDA_VERSION }}, PyTorch ${{ matrix.MATRIX_TORCH_VERSION }})
+    needs: [plan-matrix]
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-build') }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan-matrix.outputs.matrix) }}
 
     steps:
       - name: Determine TransformerEngine version
@@ -75,9 +107,18 @@ jobs:
         run: |
           uv venv --python 3.13
           uv pip install setuptools wheel
-          bash build_scripts/prepare_for_build.sh "${TRANSFORMER_ENGINE_VERSION}"
+
+      - name: Set matching CUDA and PyTorch wheel version
+        run: |
+          base_version="$(head -n 1 build_tools/VERSION.txt)"
+          printf '%s+cu.%s.torch.%s\n' \
+            "${base_version}" \
+            "${MANYLINUX_CUDA_VERSION}" \
+            "${MATRIX_TORCH_VERSION}" > build_tools/VERSION.txt
+          echo "Using TransformerEngine wheel version: $(head -n 1 build_tools/VERSION.txt)"
         env:
-          TRANSFORMER_ENGINE_VERSION: ${{ steps.transformer-engine-version.outputs.version }}
+          MANYLINUX_CUDA_VERSION: ${{ matrix.MANYLINUX_CUDA_VERSION }}
+          MATRIX_TORCH_VERSION: ${{ matrix.MATRIX_TORCH_VERSION }}
 
       - name: Build pure Python TransformerEngine metapackage wheel
         run: |
@@ -92,7 +133,7 @@ jobs:
       - name: Embed SBOM into wheel
         run: |
           for wheel in dist/*.whl; do
-            uv run --script build_scripts/embed_patches.py "$wheel" "build_scripts/patches/${TRANSFORMER_ENGINE_VERSION}" \
+            uv run --script build_scripts/embed_patches.py "$wheel" "build_scripts/patches" \
               --license-expression "Apache-2.0" \
               --license-file "LICENSE:LICENSE" \
               --source-repo "https://github.com/NVIDIA/TransformerEngine" \

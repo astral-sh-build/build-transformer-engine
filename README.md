@@ -7,10 +7,11 @@ Python, CUDA, and CPU architectures.
 ## Installation
 
 Following the PyTorch convention, artifacts are published to a separate index
-for each CUDA version. Unlike the PyTorch extension, the Transformer Engine
-metapackage is independent of CUDA, PyTorch, and CPU architecture: the same
-`transformer_engine-2.16.0-py3-none-any.whl` is published to each compatible
-CUDA index.
+for each CUDA version. Each pure Python metapackage wheel uses the same CUDA
+and PyTorch local version as its corresponding CUDA core and PyTorch extension.
+For example, `transformer_engine-2.16.0+cu.12.8.torch.2.10-py3-none-any.whl`
+matches the CUDA 12.8, PyTorch 2.10 extension. The wheel is shared across
+Python versions and CPU architectures.
 
 Once released, pre-built wheels will be available on
 [Astral's GPU indexes](https://wheels.astral.sh/index.html).
@@ -40,12 +41,11 @@ Or, with `uv pip`:
 $ uv pip install --index https://wheels.astral.sh/simple/cu128/ 'transformer-engine[pytorch]'
 ```
 
-The matching CUDA core is installed from the same Astral GPU index. Both the
-metapackage and core include the same local-version compatibility patch, so the
-patched files remain correct regardless of wheel installation order. The
-metapackage can be installed from any compatible CUDA index; it does not need a
-CUDA-specific local version or a separate build for each Python version or
-architecture.
+The matching CUDA core and PyTorch extension are installed from the same Astral
+GPU index. All three packages share their complete version, so NVIDIA's original
+version checks and Python files work without compatibility patches regardless of
+installation order. The metapackage is built once per CUDA and PyTorch version,
+not once per Python version or CPU architecture.
 
 ## Supported versions
 
@@ -68,8 +68,8 @@ Wheels can be built for the following NVIDIA Transformer Engine versions:
 - [`2.2.1`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.2.1)
 
 The latest supported upstream release, Transformer Engine 2.16.0, supports Python
-3.10 and later. Its pure Python wheel is shared across CUDA 12.1, 12.4, 12.6,
-12.8, 12.9, 13.0, and 13.2 indexes.
+3.10 and later. Metapackage wheel versions follow the CUDA and PyTorch combinations
+in the Transformer Engine PyTorch build matrix.
 
 ## License
 
