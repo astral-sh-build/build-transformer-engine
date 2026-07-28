@@ -49,7 +49,7 @@ architecture.
 
 ## Supported versions
 
-Wheels can be built for the following NVIDIA Transformer Engine versions:
+Wheels can be built for NVIDIA Transformer Engine 2.5 and later:
 
 - [`2.16.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.16)
 - [`2.15.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.15)
@@ -63,9 +63,6 @@ Wheels can be built for the following NVIDIA Transformer Engine versions:
 - [`2.7.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.7)
 - [`2.6.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.6)
 - [`2.5.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.5)
-- [`2.4.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.4)
-- [`2.3.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.3)
-- [`2.2.1`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.2.1)
 
 The latest supported upstream release, Transformer Engine 2.16.0, supports Python
 3.10 and later. Its pure Python wheel is shared across CUDA 12.1, 12.4, 12.6,
