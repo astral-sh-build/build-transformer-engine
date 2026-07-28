@@ -1,8 +1,7 @@
 # build-transformer-engine
 
 Pre-built pure Python wheels for the metapackage from
-[NVIDIA Transformer Engine](https://github.com/NVIDIA/TransformerEngine), across
-Python, CUDA, and CPU architectures.
+[NVIDIA Transformer Engine](https://github.com/NVIDIA/TransformerEngine).
 
 ## Installation
 
@@ -51,7 +50,7 @@ architecture.
 
 Wheels can be built for the following NVIDIA Transformer Engine version:
 
-- [`2.16.0`](https://github.com/NVIDIA/TransformerEngine/releases/tag/v2.16)
+- [`2.16.0`](https://github.com/astral-sh-build/build-transformer-engine/releases/tag/v2.16)
 
 Transformer Engine 2.16.0 supports Python 3.10 and later. Its pure Python wheel
 is shared across CUDA 12.1, 12.4, 12.6, 12.8, 12.9, 13.0, and 13.2 indexes.
