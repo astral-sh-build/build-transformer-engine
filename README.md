@@ -8,7 +8,7 @@ Pre-built pure Python wheels for the metapackage from
 Following the PyTorch convention, artifacts are published to a separate index
 for each CUDA version. Unlike the PyTorch extension, the Transformer Engine
 metapackage is independent of CUDA, PyTorch, and CPU architecture: the same
-`transformer_engine-2.17.0-py3-none-any.whl` is published to each compatible
+`transformer_engine-2.17.1-py3-none-any.whl` is published to each compatible
 CUDA index.
 
 Once released, pre-built wheels will be available on
@@ -50,9 +50,9 @@ architecture.
 
 Wheels can be built for the following NVIDIA Transformer Engine version:
 
-- [`2.17.0`](https://github.com/astral-sh-build/build-transformer-engine/releases/tag/v2.17)
+- [`2.17.1`](https://github.com/astral-sh-build/build-transformer-engine/releases/tag/v2.17.1)
 
-Transformer Engine 2.17.0 supports Python 3.10 and later. Its pure Python wheel
+Transformer Engine 2.17.1 supports Python 3.10 and later. Its pure Python wheel
 is shared across CUDA 12.1, 12.4, 12.6, 12.8, 12.9, 13.0, and 13.2 indexes.
 
 ## License
