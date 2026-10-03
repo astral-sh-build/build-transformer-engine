@@ -29,13 +29,13 @@ jobs:
         id: transformer-engine-version
         run: |
           # Extract the TransformerEngine source version from a release tag such
-          # as v2.17 or v2.17-r1.
+          # as v2.17.1 or v2.17.1-r1.
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
             TAG="${INPUTS_RELEASE_TAG}"
             # Remove -rN suffix if present.
             TRANSFORMER_ENGINE_VERSION=$(sed -E 's/-r[0-9]+$//' <<<"${TAG}")
           else
-            TRANSFORMER_ENGINE_VERSION="v2.17"
+            TRANSFORMER_ENGINE_VERSION="v2.17.1"
           fi
           echo "version=${TRANSFORMER_ENGINE_VERSION}" >> $GITHUB_OUTPUT
           echo "Using TransformerEngine version: ${TRANSFORMER_ENGINE_VERSION}"
