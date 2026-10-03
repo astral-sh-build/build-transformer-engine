@@ -4,7 +4,7 @@ permissions: {}
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, "charlie/gpu-audit-*"]
   workflow_dispatch:
     inputs:
       release_tag:
@@ -29,17 +29,13 @@ jobs:
         id: transformer-engine-version
         run: |
           # Extract the TransformerEngine source version from a release tag such
-          # as v2.16 or v2.16-r1.
+          # as v2.16.1 or v2.16.1-r1.
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
             TAG="${INPUTS_RELEASE_TAG}"
             # Remove -rN suffix if present.
             TRANSFORMER_ENGINE_VERSION=$(sed -E 's/-r[0-9]+$//' <<<"${TAG}")
           else
-            TRANSFORMER_ENGINE_VERSION="v2.16"
-          fi
-          if [ "${TRANSFORMER_ENGINE_VERSION}" != "v2.16" ]; then
-            echo "Only Transformer Engine v2.16 is supported" >&2
-            exit 1
+            TRANSFORMER_ENGINE_VERSION="v2.16.1"
           fi
           echo "version=${TRANSFORMER_ENGINE_VERSION}" >> $GITHUB_OUTPUT
           echo "Using TransformerEngine version: ${TRANSFORMER_ENGINE_VERSION}"
